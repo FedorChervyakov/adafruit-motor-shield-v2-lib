@@ -37,10 +37,13 @@
  *  I2C Addresses
  *-----------------------------------------------------------------------------*/
 /* Addresses active on startup */
-#define PCA9685_I2C_LED_ALL_CALL_ADDRESS    ((uint8_t) 0xE0)
-#define PCA9685_I2C_SOFTWARE_RESET_ADDRESS  ((uint8_t) 0x06)
-#define PCA9564_I2C_SLAVE_ADDRESS           ((uint8_t) 0x00)
-#define PCA9665_I2C_SLAVE_ADDRESS           ((uint8_t) 0xE0)
+#define PCA9685_I2C_LED_ALL_CALL_ADDRESS   ((uint8_t) 0xE0)
+#define PCA9685_I2C_SOFTWARE_RESET_ADDRESS ((uint8_t) 0x06) /*register address*/
+#define PCA9564_I2C_SLAVE_ADDRESS          ((uint8_t) 0x00)
+#define PCA9665_I2C_SLAVE_ADDRESS          ((uint8_t) 0xE0)
+
+/* General Call I2C address which is used as Software Reset address */
+#define PCA9685_I2C_GENERALL_CALL_ADDRESS  ((uint8_t) 0x00)
 
 /* Slave address select bits */
 #define PCA9685_A0 (0)
@@ -65,7 +68,7 @@
 #define PCA9685_SUBADR3     ((uint8_t) 0x04)
 #define PCA9685_ALLCALLADR  ((uint8_t) 0x05)
 
-/* LED output and brightness control registers                                 */
+/* output and brightness control registers for each LED  */
 #define LED_CONTROL_BASE    ((uint8_t) 0x06)
 #define PCA9685_LED0_ON_L  ((uint8_t) (LED_CONTROL_BASE + 0x0))
 #define PCA9685_LED0_ON_H  ((uint8_t) (LED_CONTROL_BASE + 0x1))
@@ -132,6 +135,7 @@
 #define PCA9685_LED15_OFF_L ((uint8_t) (LED_CONTROL_BASE + 0x3e))
 #define PCA9685_LED15_OFF_H ((uint8_t) (LED_CONTROL_BASE + 0x3f))
 
+/* output and brightness control registers for ALL LEDs */
 #define PCA9685_ALL_LED_ON_L  ((uint8_t) 0xFA)
 #define PCA9685_ALL_LED_ON_H  ((uint8_t) 0xFB)
 #define PCA9685_ALL_LED_OFF_L ((uint8_t) 0xFC)
@@ -160,6 +164,26 @@
 #define PCA9685_MODE2_OUTDRV  ((uint8_t) 1 << 2)
 #define PCA9685_MODE2_OUTNE_1 ((uint8_t) 1 << 1)
 #define PCA9685_MODE2_OUTNE_0 ((uint8_t) 1)
+
+/*-----------------------------------------------------------------------------
+ *  LED driver output pins
+ *-----------------------------------------------------------------------------*/
+#define PCA9685_LED0  ((uint8_t) 0)
+#define PCA9685_LED1  ((uint8_t) 1)
+#define PCA9685_LED2  ((uint8_t) 2)
+#define PCA9685_LED3  ((uint8_t) 3)
+#define PCA9685_LED4  ((uint8_t) 4)
+#define PCA9685_LED5  ((uint8_t) 5)
+#define PCA9685_LED6  ((uint8_t) 6)
+#define PCA9685_LED7  ((uint8_t) 7)
+#define PCA9685_LED8  ((uint8_t) 8)
+#define PCA9685_LED9  ((uint8_t) 9)
+#define PCA9685_LED10 ((uint8_t) 10)
+#define PCA9685_LED11 ((uint8_t) 11)
+#define PCA9685_LED12 ((uint8_t) 12)
+#define PCA9685_LED13 ((uint8_t) 13)
+#define PCA9685_LED14 ((uint8_t) 14)
+#define PCA9685_LED15 ((uint8_t) 15)
 
 /*-----------------------------------------------------------------------------
  *  Error codes
