@@ -167,6 +167,34 @@ int8_t pca9685_setPin( pca9685_dev *dev, uint8_t pin, uint16_t duty_cycle)
     return status;
 }		/* -----  end of function pca9685_setPin   ----- */
 
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  pca9685_setPins
+ *  Description:  Configure consecutive output pins
+ * =====================================================================================
+ */
+int8_t pca9685_setPins ( pca9685_dev *dev, uint8_t pin,
+                         uint16_t *duty_cycles, uint8_t len )
+{
+    int8_t status = PCA9685_OK;                 /* Status variable */
+    uint8_t reg[64] = {0};                      /* Output control registers */
+
+    /* Compute registers for each duty cycle */
+    for (uint8_t i=0; i < len; i++)
+    {
+        duty_to_registers((uint8_t *) &reg[i*4], *(duty_cycles+i));
+    }
+
+    /* Write to registers corresponding to a patricular sequence of pins */
+    status = dev->write(dev->dev_id, PCA9685_LED0_ON_L + 4*pin, (uint8_t *) reg, 4*len);
+    if (status != PCA9685_OK)
+    {
+        return PCA9685_E_COMM_FAIL;
+    }
+    return status;
+}		/* -----  end of function pca9685_setPins  ----- */
+
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  pca9685_setPrescaler
