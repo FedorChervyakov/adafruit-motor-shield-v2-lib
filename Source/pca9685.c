@@ -60,7 +60,7 @@ void duty_to_registers (uint8_t *reg, uint16_t duty_cycle)
  *  Description:  Initialize PCA9685. i.e. reset, configure autoincrement and prescaler
  * =====================================================================================
  */
-int8_t pca9685_init(pca9685_dev *dev)
+int8_t pca9685_init(struct pca9685_dev *dev)
 {
     int8_t status = PCA9685_OK;
 
@@ -102,7 +102,7 @@ int8_t pca9685_init(pca9685_dev *dev)
  *  Description:  Perform software reset of PCA9685 by calling 0x00 address in read mode
  * =====================================================================================
  */
-int8_t pca9685_reset(pca9685_dev *dev)
+int8_t pca9685_reset(struct pca9685_dev *dev)
 {
     /* SWRST procedure is described in the datasheet    */
     int8_t status = PCA9685_OK;
@@ -125,10 +125,10 @@ int8_t pca9685_reset(pca9685_dev *dev)
  *  Description:  Configure all pins at once
  * =====================================================================================
  */
-int8_t pca9685_setAll(pca9685_dev *dev, uint16_t duty_cycle)
+int8_t pca9685_setAll(struct pca9685_dev *dev, uint16_t duty_cycle)
 {
     int8_t status = PCA9685_OK;                 /* Status variable */
-    uint8_t reg[4] = {0}                        /* Output control registers */
+    uint8_t reg[4] = {0};                       /* Output control registers */
     
     /* Convert duty cycle to registers */
     duty_to_registers((uint8_t *) reg, duty_cycle);
@@ -149,7 +149,7 @@ int8_t pca9685_setAll(pca9685_dev *dev, uint16_t duty_cycle)
  *  Description:  Configure single output pin (0 to 15)
  * =====================================================================================
  */
-int8_t pca9685_setPin( pca9685_dev *dev, uint8_t pin, uint16_t duty_cycle)
+int8_t pca9685_setPin(struct pca9685_dev *dev, uint8_t pin, uint16_t duty_cycle)
 {
     int8_t status = PCA9685_OK;                 /* Status variable */
     uint8_t reg[4] = {0};                       /* Output control registers */
@@ -174,7 +174,7 @@ int8_t pca9685_setPin( pca9685_dev *dev, uint8_t pin, uint16_t duty_cycle)
  *  Description:  Configure consecutive output pins
  * =====================================================================================
  */
-int8_t pca9685_setPins ( pca9685_dev *dev, uint8_t pin,
+int8_t pca9685_setPins (struct pca9685_dev *dev, uint8_t pin,
                          uint16_t *duty_cycles, uint8_t len )
 {
     int8_t status = PCA9685_OK;                 /* Status variable */
@@ -201,7 +201,7 @@ int8_t pca9685_setPins ( pca9685_dev *dev, uint8_t pin,
  *  Description:  Set PWM frequency
  * =====================================================================================
  */
-int8_t pca9685_setPrescaler( pca9685_dev *dev, uint16_t PWM_frequency)
+int8_t pca9685_setPrescaler(struct pca9685_dev *dev, uint16_t PWM_frequency)
 {
     int8_t status = PCA9685_OK;
 

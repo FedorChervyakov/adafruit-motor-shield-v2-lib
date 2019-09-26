@@ -28,10 +28,10 @@
  *  Function prototypes
  *-----------------------------------------------------------------------------*/
 void duty_to_registers (uint8_t *reg, uint16_t duty_cycle);
-int8_t pca9685_init(pca9685_dev *dev);
-int8_t pca9685_reset(pca9685_dev *dev);
-int8_t pca9685_setAll(pca9685_dev *dev, uint16_t duty_cycle);
-int8_t pca9685_setPin(pca9685_dev *dev, uint8_t pin, uint16_t duty_cycle);
-int8_t pca9685_setPins(pca9685_dev *dev, uint8_t pin, uint16_t *duty_cycles, uint8_t len )
-int8_t pca9685_setPrescaler(pca9685_dev *dev, uint16_t PWM_frequency);
+int8_t pca9685_init(struct pca9685_dev *dev);
+int8_t pca9685_reset(struct pca9685_dev *dev);
+int8_t pca9685_setAll(struct pca9685_dev *dev, uint16_t duty_cycle);
+int8_t pca9685_setPin(struct pca9685_dev *dev, uint8_t pin, uint16_t duty_cycle);
+int8_t pca9685_setPins(struct pca9685_dev *dev, uint8_t pin, uint16_t *duty_cycles, uint8_t len);
+int8_t pca9685_setPrescaler(struct pca9685_dev *dev, uint16_t PWM_frequency);
 #endif
