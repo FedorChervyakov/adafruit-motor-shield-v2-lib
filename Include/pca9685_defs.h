@@ -43,7 +43,7 @@
 #define PCA9665_I2C_SLAVE_ADDRESS          ((uint8_t) 0xE0)
 
 /* General Call I2C address which is used as Software Reset address */
-#define PCA9685_I2C_GENERALL_CALL_ADDRESS  ((uint8_t) 0x00)
+#define PCA9685_I2C_GENERAL_CALL_ADDRESS   ((uint8_t) 0x00)
 
 /* Slave address select bits */
 #define PCA9685_A0 (0)
@@ -200,10 +200,11 @@ typedef int8_t (*pca9685_i2c_com_fptr_t) \
         (uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint8_t len);
 typedef void (*pca9685_delay_fptr_t) (uint16_t delay_ms);
 
+typedef struct pca9685_dev pca9685_dev;
 /*-----------------------------------------------------------------------------
  *  PCA9685 device structure
  *-----------------------------------------------------------------------------*/
-typedef struct pca9685_dev
+struct pca9685_dev
 {
     uint8_t dev_id;                             /* Device address */
     pca9685_i2c_com_fptr_t read;                /* I2C read function pointer */
