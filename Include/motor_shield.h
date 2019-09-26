@@ -25,6 +25,13 @@
 #include "pca9685.h"
 
 /*-----------------------------------------------------------------------------
+ *  Function prototypes
+ *-----------------------------------------------------------------------------*/
+struct MotorShield_dev MS_struct_Init(struct pca9685_dev *pca9685, uint8_t driver1_mode, uint8_t driver2_mode);
+int8_t MS_Init(struct MotorShield_dev *MS);
+int8_t MS_DC_drive(struct MotorShield_dev *MS, uint8_t motor, uint8_t mode, uint16_t duty_cycle);
+
+/*-----------------------------------------------------------------------------
  *  TB6612 mode defines
  *-----------------------------------------------------------------------------*/
 #define TB6612_STEPPER_MODE  ((uint8_t) 1)
@@ -54,30 +61,35 @@
 #define MS_E_INVALID_MOTOR   ((int8_t) -2)
 #define MS_E_DRIVE_FAIL      ((int8_t) -3)
 
+
+/*-----------------------------------------------------------------------------
+ *  Typedefs
+ *-----------------------------------------------------------------------------*/
+
 /*-----------------------------------------------------------------------------
  *  Motor shield structure
  *-----------------------------------------------------------------------------*/
-typedef struct MotorShield_dev_t
+struct MotorShield_dev
 {
-    pca9685_dev pca9685;
-    tb6612_dev_t tb6612_1;
-    tb6612_dev_t tb6612_2;
+    struct pca9685_dev *pca9685;
+    struct tb6612_dev *tb6612_1;
+    struct tb6612_dev *tb6612_2;
 };
 
 /*-----------------------------------------------------------------------------
  *  Structure representing a single TB6612 device
  *-----------------------------------------------------------------------------*/
-typedef struct tb6612_dev_t
+struct tb6612_dev
 {
     uint8_t mode;                       /* Mode: single stepper or two DC motors */
-    H_bridge_t H_A;                     /* H-bridge A  */
-    H_bridge_t H_B;                     /* H-bridge B  */
+    struct H_bridge *H_A;                     /* H-bridge A  */
+    struct H_bridge *H_B;                     /* H-bridge B  */
 };
 
 /*-----------------------------------------------------------------------------
  *  Structure representing a single H-bridge of TB6612
  *-----------------------------------------------------------------------------*/
-typedef struct H_bridge_t
+struct H_bridge
 {
     uint8_t PWM_pin;
     uint8_t IN1_pin;
