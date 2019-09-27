@@ -21,9 +21,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "motor_shield.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,7 +48,9 @@ DMA_HandleTypeDef hdma_i2c1_rx;
 DMA_HandleTypeDef hdma_i2c1_tx;
 
 /* USER CODE BEGIN PV */
-
+MotorShield_dev MS;
+uint8_t rxI2C_buffer[64];
+uint8_t txI2C_buffer[64];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -56,7 +59,9 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
-
+void delay_ms(uint32_t period);
+int8_t i2c_read(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data, uint16_t len);
+int8_t i2c_write(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data, uint16_t len);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -289,7 +294,123 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+int8_t user_i2c_read(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data, uint16_t len)
+{
+    int8_t rslt = 0;                    /* Return 0 for Success, non-zero for failure */
 
+    int16_t dev_addr = (uint16_t) dev_id;
+    /*
+     * The parameter dev_id can be used as a variable to store the I2C address of the device
+     */
+
+    /*
+     * Data on the bus should be like
+     * |------------+---------------------|
+     * | I2C action | Data                |
+     * |------------+---------------------|
+     * | Start      | -                   |
+     * | Write      | (reg_addr)          |
+     * | Stop       | -                   |
+     * | Start      | -                   |
+     * | Read       | (reg_data[0])       |
+     * | Read       | (....)              |
+     * | Read       | (reg_data[len - 1]) |
+     * | Stop       | -                   |
+     * |------------+---------------------|
+     */
+
+    do 
+    {
+        if (HAL_I2C_Master_Transmit_DMA(&hi2c1, dev_addr, (uint8_t*) &reg_addr, 1)!= HAL_OK)
+        {
+            /* Error_Handler() function is called when error occurs. */
+            Error_Handler();
+            rslt = -1;
+        }
+
+        while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY)
+        {
+        } 
+        
+        if(HAL_I2C_Master_Receive_DMA(&hi2c1, dev_addr, (uint8_t*) reg_data, len) != HAL_OK)
+        {
+            /* Error_Handler() function is called when error occurs. */
+            Error_Handler();
+            rslt = -1;
+        }
+
+        do {} while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY);
+    }
+    while (HAL_I2C_GetError(&hi2c1) == HAL_I2C_ERROR_AF);
+
+    return rslt;
+}
+
+int8_t user_i2c_write(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data, uint16_t len)
+{
+    int8_t rslt = 0;                    /* Return 0 for Success, non-zero for failure */
+    int16_t dev_addr = (uint16_t) dev_id;
+
+    /*
+     * Data on the bus should be like
+     * |------------+---------------------|
+     * | I2C action | Data                |
+     * |------------+---------------------|
+     * | Start      | -                   |
+     * | Write      | (reg_addr)          |
+     * | Write      | (reg_data[0])       |
+     * | Write      | (....)              |
+     * | Write      | (reg_data[len - 1]) |
+     * | Stop       | -                   |
+     * |------------+---------------------|
+     */
+
+
+    int n;
+    for (int i=0; i<len; i++) {                 /* Build write command */
+        cmd[i] = reg_addr;                      /* register address */
+    }
+    
+    do
+    {
+        if (HAL_I2C_Master_Transmit_DMA(&hi2c1, dev_addr, (uint8_t *) txI2C_buffer, len) != HAL_OK)    /* Send command */
+        {
+            Error_Handler();
+            rslt = -1;
+        }
+        
+        do {} while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY);
+    }
+    while (HAL_I2C_GetError(&hi2c1) == HAL_I2C_ERROR_AF);
+
+    return rslt;
+}
+
+/**
+  * @brief  Tx Transfer completed callback
+  * @param  hi2c: I2C handle.
+  * @note   This example shows a simple way to report end of DMA Tx transfer, and
+  *         you can add your own implementation.
+  * @retval None
+  */
+void HAL_I2C_TxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+    /* Toggle Pin 3 to indicate I2C tx completion */ 
+    HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+}
+
+/**
+  * @brief  Rx Transfer completed callback
+  * @param  hi2c: I2C handle.
+  * @note   This example shows a simple way to report end of DMA Rx transfer, and
+  *         you can add your own implementation.
+  * @retval None
+  */
+void HAL_I2C_RxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+    /* Toggle Pin 2 to indicate I2C rx completion */
+    HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+}
 /* USER CODE END 4 */
 
 /**

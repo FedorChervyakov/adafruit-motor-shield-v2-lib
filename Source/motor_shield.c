@@ -29,23 +29,6 @@ struct MotorShield_dev MS_struct_Init(struct pca9685_dev *pca9685, uint8_t drive
     struct MotorShield_dev MS;
     struct tb6612_dev tb6612_1, tb6612_2;
 
-    /* Initialize H-bridge structures with corresponding pca9685 outputs */
-    /* TB6612 number 1 (IC1 on the schematic) */
-////    tb6612_1.H_A = (H_bridge) { .PWM_pin = PCA9685_LED8, 
-////                                  .IN1_pin = PCA9685_LED10,
-////                                  .IN2_pin = PCA9685_LED9 };
-////    tb6612_1.H_B = (H_bridge) { .PWM_pin = PCA9685_LED13,
-////                                  .IN1_pin = PCA9685_LED11,
-////                                  .IN2_pin = PCA9685_LED12};
-////
-////    /* TB6612 number 2 (IC3 on the schematic) */
-////    tb6612_2.H_A = (H_bridge) { .PWM_pin = PCA9685_LED2,
-////                                  .IN1_pin = PCA9685_LED4,
-////                                  .IN2_pin = PCA9685_LED3 };
-////    tb6612_2.H_B = (H_bridge) { .PWM_pin = PCA9685_LED7,
-////                                  .IN1_pin = PCA9685_LED5,
-////                                  .IN2_pin = PCA9685_LED6 };
-
     /* Initialize TB6612 structures with passed modes */
     tb6612_1.mode = driver1_mode;
     tb6612_2.mode = driver2_mode;

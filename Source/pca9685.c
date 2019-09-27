@@ -54,6 +54,25 @@ void duty_to_registers (uint8_t *reg, uint16_t duty_cycle)
     return;
 }		/* -----  end of function duty_to_registers  ----- */
 
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  pca9685_init_struct
+ *  Description:  Returns a pca9685_dev structure initialized with passed arguments
+ * =====================================================================================
+ */
+pca9685_dev pca9685_init_struct( uint8_t dev_id, /* I2C address */
+                                 pca9685_i2c_com_fptr_t i2c_write_fp,
+                                 pca9685_i2c_com_fptr_t i2c_read_fp,
+                                 pca9685_delay_fptr_t   delay_ms_fp,
+                                 uint16_t frequency)
+{
+    pca9685_dev dev = { .dev_id = dev_id, .read = i2c_read_fp,
+                        .write = i2c_write_fp, .delay = delay_ms_fp,
+                        .frequency = frequency };
+
+    return dev;
+}		/* -----  end of function pca9685_init_struct  ----- */
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  pca9685_init
