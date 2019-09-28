@@ -20,51 +20,11 @@
 
 /* 
  * ===  FUNCTION  ======================================================================
- *         Name:  MS_struct_Init
- *  Description:  Return MotorShield_dev_t initialized with passed settings
- * =====================================================================================
- */
-struct MotorShield_dev MS_struct_Init(struct pca9685_dev *pca9685, uint8_t driver1_mode, uint8_t driver2_mode)
-{
-    struct MotorShield_dev MS;
-    struct tb6612_dev tb6612_1, tb6612_2;
-
-    /* Initialize H-bridge structures with corresponding pca9685 outputs */
-    /* TB6612 number 1 (IC1 on the schematic) */
-////    tb6612_1.H_A = (H_bridge) { .PWM_pin = PCA9685_LED8, 
-////                                  .IN1_pin = PCA9685_LED10,
-////                                  .IN2_pin = PCA9685_LED9 };
-////    tb6612_1.H_B = (H_bridge) { .PWM_pin = PCA9685_LED13,
-////                                  .IN1_pin = PCA9685_LED11,
-////                                  .IN2_pin = PCA9685_LED12};
-////
-////    /* TB6612 number 2 (IC3 on the schematic) */
-////    tb6612_2.H_A = (H_bridge) { .PWM_pin = PCA9685_LED2,
-////                                  .IN1_pin = PCA9685_LED4,
-////                                  .IN2_pin = PCA9685_LED3 };
-////    tb6612_2.H_B = (H_bridge) { .PWM_pin = PCA9685_LED7,
-////                                  .IN1_pin = PCA9685_LED5,
-////                                  .IN2_pin = PCA9685_LED6 };
-
-    /* Initialize TB6612 structures with passed modes */
-    tb6612_1.mode = driver1_mode;
-    tb6612_2.mode = driver2_mode;
-
-    /* Initialize MotorShield_dev_t structure */
-    MS.pca9685 = pca9685;
-    MS.tb6612_1 = &tb6612_1;
-    MS.tb6612_2 = &tb6612_2;
-
-    return MS;
-}
-
-/* 
- * ===  FUNCTION  ======================================================================
  *         Name:  MS_Init
  *  Description:  Initialize the MotorShield. i.e. initialize the pca9685
  * =====================================================================================
  */
-int8_t MS_Init(struct MotorShield_dev *MS)
+int8_t MS_Init(MotorShield_dev *MS)
 {
     int8_t status = MS_OK;
     
@@ -84,7 +44,7 @@ int8_t MS_Init(struct MotorShield_dev *MS)
  *  Description:  Configure single H-bridge controller
  * =====================================================================================
  */
-int8_t MS_DC_drive(struct MotorShield_dev *MS, uint8_t motor,
+int8_t MS_DC_drive(MotorShield_dev *MS, uint8_t motor,
                    uint8_t mode, uint16_t duty_cycle)
 {
     int8_t status = MS_OK;                      /* Status variable */
@@ -94,9 +54,9 @@ int8_t MS_DC_drive(struct MotorShield_dev *MS, uint8_t motor,
 
     /* Check if specified DC motor is not available */
     if (!((((motor == MS_DC_MOTOR_1) || (motor == MS_DC_MOTOR_2)) \
-        && (MS->tb6612_1->mode == TB6612_2DC_MODE)) \
+        && (MS->driver1_mode == TB6612_2DC_MODE)) \
         || (((motor == MS_DC_MOTOR_3) || (motor == MS_DC_MOTOR_4)) \
-        && (MS->tb6612_2->mode == TB6612_2DC_MODE))))
+        && (MS->driver2_mode == TB6612_2DC_MODE))))
     {
         return MS_E_INVALID_MOTOR;
     }

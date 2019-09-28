@@ -47,15 +47,15 @@
 
 /* Slave address select bits */
 #define PCA9685_A0 (0)
-#define PCA9685_A1 (0 << 1)
-#define PCA9685_A2 (0 << 2)
-#define PCA9685_A3 (0 << 3)
-#define PCA9685_A4 (0 << 4)
+#define PCA9685_A1 (0)
+#define PCA9685_A2 (0)
+#define PCA9685_A3 (0)
+#define PCA9685_A4 (0)
 #define PCA9685_A5 (1 << 5)
 
 /* 8-bit Slave address */
-#define PCA9685_I2C_SLAVE_ADDRESS ((uint8_t)((1 << 6) & PCA9685_A5 & PCA9685_A4\
-                     & PCA9685_A3 & PCA9685_A2 & PCA9685_A1 & PCA9685_A0) << 1)
+#define PCA9685_I2C_SLAVE_ADDRESS ((uint8_t)(((1 << 6) & PCA9685_A5 & PCA9685_A4\
+                     & PCA9685_A3 & PCA9685_A2 & PCA9685_A1 & PCA9685_A0) << 1))
 
 /*-----------------------------------------------------------------------------
  *  Registers

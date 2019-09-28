@@ -26,34 +26,52 @@
  */
 void duty_to_registers (uint8_t *reg, uint16_t duty_cycle)
 {
+    *reg = 0;
+
     if (duty_cycle == 0)
     { 
         /* Full OFF */
-        reg[0] = 0x00;
-        reg[1] = 0x00;
-        reg[2] = 0x00;
-        reg[3] = 1 << 4;
+        *(reg+1) = 0;
+        *(reg+2) = 0;
+        *(reg+3) = 1 << 4;
     }
     else if (duty_cycle < 4096) 
     {
         /* PWM operation, no delay */
-        reg[0] = 0x00;
-        reg[1] = 0x00;
-        reg[2] = (uint8_t) duty_cycle;
-        reg[3] = (uint8_t) (duty_cycle >> 8);
+        *(reg+1) = 0;
+        *(reg+2) = (uint8_t) duty_cycle;
+        *(reg+3) = (uint8_t) (duty_cycle >> 8);
     }
     else
     {
         /* Duty cycle > 4095 -> out full ON */
-        reg[0] = 0x00;
-        reg[1] = 1 << 4;
-        reg[2] = 0x00;
-        reg[3] = 0x00;
+        *(reg+1) = 1 << 4;
+        *(reg+2) = 0;
+        *(reg+3) = 0;
     }
 
     return;
 }		/* -----  end of function duty_to_registers  ----- */
 
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  pca9685_init_struct
+ *  Description:  Returns a pca9685_dev structure initialized with passed arguments
+ * =====================================================================================
+ */
+pca9685_dev pca9685_init_struct( uint8_t dev_id, /* I2C address */
+                                 pca9685_i2c_com_fptr_t i2c_write_fp,
+                                 pca9685_i2c_com_fptr_t i2c_read_fp,
+                                 pca9685_delay_fptr_t   delay_ms_fp,
+                                 uint16_t frequency)
+{
+    pca9685_dev dev = { .dev_id = dev_id, .read = i2c_read_fp,
+                        .write = i2c_write_fp, .delay = delay_ms_fp,
+                        .frequency = frequency };
+
+    return dev;
+}		/* -----  end of function pca9685_init_struct  ----- */
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  pca9685_init
@@ -99,7 +117,7 @@ int8_t pca9685_init(struct pca9685_dev *dev)
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  pca9685_reset
- *  Description:  Perform software reset of PCA9685 by calling 0x00 address in read mode
+ *  Description:  Perform software reset of PCA9685 by calling 0x00 address in write mode
  * =====================================================================================
  */
 int8_t pca9685_reset(struct pca9685_dev *dev)
@@ -108,7 +126,7 @@ int8_t pca9685_reset(struct pca9685_dev *dev)
     int8_t status = PCA9685_OK;
 
     /* Call general call i2c address with swrst address as per datasheet  */
-    status = dev->read(PCA9685_I2C_GENERAL_CALL_ADDRESS, \
+    status = dev->write(PCA9685_I2C_GENERAL_CALL_ADDRESS, \
                        PCA9685_I2C_SOFTWARE_RESET_ADDRESS, \
                        NULL, 0);
     if (status != PCA9685_OK) 
@@ -183,7 +201,7 @@ int8_t pca9685_setPins (struct pca9685_dev *dev, uint8_t pin,
     /* Compute registers for each duty cycle */
     for (uint8_t i=0; i < len; i++)
     {
-        duty_to_registers((uint8_t *) &reg[i*4], *(duty_cycles+i));
+        duty_to_registers((uint8_t *) &reg+i*4, *(duty_cycles+i));
     }
 
     /* Write to registers corresponding to a patricular sequence of pins */
