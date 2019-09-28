@@ -21,7 +21,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "motor_shield.h"
@@ -34,7 +33,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define MS_I2C_ADDRESS ((uint8_t) 0xC0)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -44,22 +43,22 @@
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
-DMA_HandleTypeDef hdma_i2c1_rx;
-DMA_HandleTypeDef hdma_i2c1_tx;
 
 /* USER CODE BEGIN PV */
 MotorShield_dev MS;
+pca9685_dev pca9685;
 uint8_t rxI2C_buffer[64];
 uint8_t txI2C_buffer[64];
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_DMA_Init(void);
 static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
-void delay_ms(uint32_t period);
+void Motor_Shield_Init(void);
+void delay_ms(uint16_t period);
 int8_t i2c_read(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data, uint16_t len);
 int8_t i2c_write(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data, uint16_t len);
 /* USER CODE END PFP */
@@ -98,16 +97,22 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_DMA_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-
+  Motor_Shield_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    MS_DC_drive(&MS, MS_DC_MOTOR_1, MS_CW, 2048);
+
+    HAL_Delay(750);
+
+    MS_DC_drive(&MS, MS_DC_MOTOR_1, MS_SHORT_BRAKE, 0);
+
+    HAL_Delay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -218,26 +223,6 @@ static void MX_I2C1_Init(void)
 
 }
 
-/** 
-  * Enable DMA controller clock
-  */
-static void MX_DMA_Init(void) 
-{
-
-  /* DMA controller clock enable */
-  __HAL_RCC_DMAMUX1_CLK_ENABLE();
-  __HAL_RCC_DMA1_CLK_ENABLE();
-
-  /* DMA interrupt init */
-  /* DMA1_Channel1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
-  /* DMA1_Channel2_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
-
-}
-
 /**
   * @brief GPIO Initialization Function
   * @param None
@@ -294,97 +279,130 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-int8_t user_i2c_read(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data, uint16_t len)
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  Motor_Shield_Init
+ *  Description:  
+ * =====================================================================================
+ */
+void Motor_Shield_Init (void)
+{
+        pca9685 = pca9685_init_struct(MS_I2C_ADDRESS,
+                                      (pca9685_i2c_com_fptr_t) i2c_write,
+                                      (pca9685_i2c_com_fptr_t) i2c_read,
+                                      delay_ms, 1200);
+        MS.pca9685 = &pca9685;
+        MS.driver1_mode = TB6612_2DC_MODE;
+        MS.driver2_mode = TB6612_2DC_MODE;
+
+        if (MS_Init(&MS) != 0) 
+        {
+            Error_Handler();
+        }
+}		/* -----  end of function Motor_Shield_Init  ----- */
+
+
+/*-----------------------------------------------------------------------------
+ *  Functions for I2C communication with PCA9685 IC
+ *-----------------------------------------------------------------------------*/
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  delay_ms
+ *  Description:  Example of delay function
+ * =====================================================================================
+ */
+void delay_ms(uint16_t period)
+{
+    HAL_Delay(period);
+}
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  i2c_read
+ *  Description:  Example of i2c read function
+ * =====================================================================================
+ */
+int8_t i2c_read(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data, uint16_t len)
 {
     int8_t rslt = 0;                    /* Return 0 for Success, non-zero for failure */
 
-    int16_t dev_addr = (uint16_t) dev_id;
+    uint16_t dev_addr = (uint16_t) dev_id;
     /*
      * The parameter dev_id can be used as a variable to store the I2C address of the device
      */
 
-    /*
-     * Data on the bus should be like
-     * |------------+---------------------|
-     * | I2C action | Data                |
-     * |------------+---------------------|
-     * | Start      | -                   |
-     * | Write      | (reg_addr)          |
-     * | Stop       | -                   |
-     * | Start      | -                   |
-     * | Read       | (reg_data[0])       |
-     * | Read       | (....)              |
-     * | Read       | (reg_data[len - 1]) |
-     * | Stop       | -                   |
-     * |------------+---------------------|
-     */
-
     do 
     {
-        if (HAL_I2C_Master_Transmit_DMA(&hi2c1, dev_addr, (uint8_t*) &reg_addr, 1)!= HAL_OK)
+        if (HAL_I2C_Master_Transmit_IT(&hi2c1, dev_addr, (uint8_t *) &reg_addr, len) != HAL_OK) 
         {
-            /* Error_Handler() function is called when error occurs. */
-            Error_Handler();
-            rslt = -1;
-        }
-
-        while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY)
-        {
-        } 
-        
-        if(HAL_I2C_Master_Receive_DMA(&hi2c1, dev_addr, (uint8_t*) reg_data, len) != HAL_OK)
-        {
-            /* Error_Handler() function is called when error occurs. */
             Error_Handler();
             rslt = -1;
         }
 
         do {} while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY);
+
+        if (HAL_I2C_GetError(&hi2c1) != HAL_I2C_ERROR_NONE) { HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET); }
+
+        if (len > 0) 
+        {
+            if(HAL_I2C_Master_Receive_IT(&hi2c1, dev_addr, reg_data, len) != HAL_OK)
+            {
+                /* Error_Handler() function is called when error occurs. */
+                Error_Handler();
+                rslt = -1;
+            }
+
+            do {} while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY);
+
+            if (HAL_I2C_GetError(&hi2c1) != HAL_I2C_ERROR_NONE) { HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET); }
+        }
     }
     while (HAL_I2C_GetError(&hi2c1) == HAL_I2C_ERROR_AF);
 
     return rslt;
 }
 
-int8_t user_i2c_write(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data, uint16_t len)
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  i2c_write
+ *  Description:  Example of i2c write function
+ * =====================================================================================
+ */
+int8_t i2c_write(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data, uint16_t len)
 {
-    int8_t rslt = 0;                    /* Return 0 for Success, non-zero for failure */
-    int16_t dev_addr = (uint16_t) dev_id;
+    int8_t rslt = 0;                            /* Return 0 for Success, non-zero for failure */
+    int16_t dev_addr = (uint16_t) dev_id;       /* I2C address */
 
-    /*
-     * Data on the bus should be like
-     * |------------+---------------------|
-     * | I2C action | Data                |
-     * |------------+---------------------|
-     * | Start      | -                   |
-     * | Write      | (reg_addr)          |
-     * | Write      | (reg_data[0])       |
-     * | Write      | (....)              |
-     * | Write      | (reg_data[len - 1]) |
-     * | Stop       | -                   |
-     * |------------+---------------------|
-     */
+    /* Build write command */
+    txI2C_buffer[0] = reg_addr;                 /* register address */
+    int8_t i = 1;
+    do {
+        txI2C_buffer[i] = reg_data[i-1];
+        i++;
+    } while (i<len);
 
-
-    int n;
-    for (int i=0; i<len; i++) {                 /* Build write command */
-        cmd[i] = reg_addr;                      /* register address */
-    }
-    
+    /* I2C transmit */
     do
     {
-        if (HAL_I2C_Master_Transmit_DMA(&hi2c1, dev_addr, (uint8_t *) txI2C_buffer, len) != HAL_OK)    /* Send command */
+        if (HAL_I2C_Master_Transmit_IT(&hi2c1, dev_addr, (uint8_t *) txI2C_buffer, len+1) != HAL_OK)    /* Send command */
         {
             Error_Handler();
             rslt = -1;
         }
         
         do {} while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY);
+
+        if (HAL_I2C_GetError(&hi2c1) != HAL_I2C_ERROR_NONE) { HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET); }
     }
     while (HAL_I2C_GetError(&hi2c1) == HAL_I2C_ERROR_AF);
 
     return rslt;
 }
+
+/*-----------------------------------------------------------------------------
+ *  I2C callback functions
+ *-----------------------------------------------------------------------------*/
 
 /**
   * @brief  Tx Transfer completed callback
@@ -411,6 +429,16 @@ void HAL_I2C_RxCpltCallback(I2C_HandleTypeDef *hi2c)
     /* Toggle Pin 2 to indicate I2C rx completion */
     HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 }
+
+
+void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *I2cHandle)
+{
+  if (HAL_I2C_GetError(I2cHandle) != HAL_I2C_ERROR_AF)
+  {
+    Error_Handler();
+  }
+}
+
 /* USER CODE END 4 */
 
 /**
@@ -420,7 +448,16 @@ void HAL_I2C_RxCpltCallback(I2C_HandleTypeDef *hi2c)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
+    /* User can add his own implementation to report the HAL error return state */
+    while (1) 
+    {
+        HAL_GPIO_TogglePin(LD1_GPIO_Port, LD1_Pin);
+        HAL_Delay(250);
+        HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+        HAL_Delay(250);
+        HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+        HAL_Delay(250);
+    }
 
   /* USER CODE END Error_Handler_Debug */
 }

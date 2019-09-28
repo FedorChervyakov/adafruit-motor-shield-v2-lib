@@ -28,7 +28,9 @@
  *  Function prototypes
  *-----------------------------------------------------------------------------*/
 void duty_to_registers (uint8_t *reg, uint16_t duty_cycle);
-pca9685_dev pca9685_init_struct( uint8_t dev_id, /* I2C address */
+pca9685_dev pca9685_init_struct(uint8_t dev_id, pca9685_i2c_com_fptr_t i2c_write_fp,
+                                pca9685_i2c_com_fptr_t i2c_read_fp, 
+                                pca9685_delay_fptr_t delay_ms_fp, uint16_t frequency);
 int8_t pca9685_init(struct pca9685_dev *dev);
 int8_t pca9685_reset(struct pca9685_dev *dev);
 int8_t pca9685_setAll(struct pca9685_dev *dev, uint16_t duty_cycle);
