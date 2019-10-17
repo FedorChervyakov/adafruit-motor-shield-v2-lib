@@ -120,10 +120,16 @@ int8_t MS_DC_drive(MotorShield_dev *MS, uint8_t motor,
             sorted_duty[2] = duty_cycles[0];    /* Pin 7,  PWM */
             s_pin = PCA9685_LED5;
             break;
+        default:
+            sorted_duty[0] = 0;    /* Pin 8,  PWM */
+            sorted_duty[1] = 0;    /* Pin 9,  IN2 */
+            sorted_duty[2] = 0;    /* Pin 10, IN1 */
+            s_pin = PCA9685_LED8;
+            break;
     }
 
     /* Write output config registers */
-    status = pca9685_setPins(MS->pca9685, s_pin, (uint16_t *) sorted_duty, 3);
+    status = pca9685_setPins(MS->pca9685, s_pin, (uint16_t *) &sorted_duty[0], 3);
     if (status != PCA9685_OK)
     {
         return MS_E_DRIVE_FAIL;
